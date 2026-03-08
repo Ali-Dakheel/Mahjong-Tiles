@@ -7,16 +7,25 @@ interface ValueMapDisplayProps {
   valueMap: TileValueMap;
 }
 
-type TileKey = keyof TileValueMap;
+interface HonorTileDef {
+  key: keyof TileValueMap;
+  name: string;
+  chinese: string;
+  unicode: string;
+  accentColor: string;
+}
 
-const HONOR_TILES: { key: TileKey; label: string; unicode: string }[] = [
-  { key: 'dragon_red', label: '中', unicode: '🀄' },
-  { key: 'dragon_green', label: '發', unicode: '🀅' },
-  { key: 'dragon_white', label: '白', unicode: '🀆' },
-  { key: 'wind_east', label: 'E', unicode: '🀀' },
-  { key: 'wind_south', label: 'S', unicode: '🀁' },
-  { key: 'wind_west', label: 'W', unicode: '🀂' },
-  { key: 'wind_north', label: 'N', unicode: '🀃' },
+const DRAGONS: HonorTileDef[] = [
+  { key: 'dragon_red',   name: 'Red',   chinese: '中', unicode: '🀄', accentColor: '#ef4444' },
+  { key: 'dragon_green', name: 'Green', chinese: '發', unicode: '🀅', accentColor: '#22c55e' },
+  { key: 'dragon_white', name: 'White', chinese: '白', unicode: '🀆', accentColor: '#94a3b8' },
+];
+
+const WINDS: HonorTileDef[] = [
+  { key: 'wind_east',  name: 'East',  chinese: '東', unicode: '🀀', accentColor: '#f59e0b' },
+  { key: 'wind_south', name: 'South', chinese: '南', unicode: '🀁', accentColor: '#f59e0b' },
+  { key: 'wind_west',  name: 'West',  chinese: '西', unicode: '🀂', accentColor: '#f59e0b' },
+  { key: 'wind_north', name: 'North', chinese: '北', unicode: '🀃', accentColor: '#f59e0b' },
 ];
 
 function getValueColor(value: number): string {
@@ -27,71 +36,99 @@ function getValueColor(value: number): string {
   return '#c8a96e';
 }
 
-function getBarWidth(value: number): string {
-  return `${((value - 1) / 8) * 100}%`;
+function TileCard({ def, value }: { def: HonorTileDef; value: number }) {
+  const valueColor = getValueColor(value);
+  const isDanger = value <= 2 || value >= 8;
+
+  return (
+    <motion.div
+      className="relative flex flex-col items-center rounded-xl p-3 gap-1"
+      style={{
+        background: isDanger
+          ? `rgba(${value <= 2 ? '239,68,68' : '245,158,11'},0.1)`
+          : 'rgba(255,255,255,0.04)',
+        border: `1px solid ${isDanger ? valueColor + '50' : 'rgba(255,255,255,0.08)'}`,
+      }}
+    >
+      {/* Danger badge */}
+      {isDanger && (
+        <motion.div
+          animate={{ opacity: [1, 0.4, 1] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[7px] font-black tracking-widest uppercase whitespace-nowrap"
+          style={{ background: valueColor, color: '#0f172a' }}
+        >
+          ⚠ DANGER
+        </motion.div>
+      )}
+
+      {/* Tile unicode */}
+      <span className="text-3xl leading-none select-none" style={{ fontFamily: 'serif' }}>
+        {def.unicode}
+      </span>
+
+      {/* Chinese character */}
+      <span className="text-xl font-black leading-none" style={{ color: def.accentColor, fontFamily: 'serif' }}>
+        {def.chinese}
+      </span>
+
+      {/* Name */}
+      <span className="text-[9px] tracking-wider uppercase opacity-40 leading-none">
+        {def.name}
+      </span>
+
+      {/* Value */}
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={value}
+          initial={{ y: -8, opacity: 0, scale: 0.8 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: 8, opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+          className="text-2xl font-black tabular-nums leading-none mt-0.5"
+          style={{ color: valueColor }}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+
+      {/* Mini bar */}
+      <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <motion.div
+          className="h-full rounded-full"
+          animate={{ width: `${((value - 1) / 8) * 100}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ backgroundColor: valueColor }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <p className="text-[9px] tracking-[0.2em] uppercase opacity-30 mt-1 mb-0.5">{label}</p>
+  );
 }
 
 export function ValueMapDisplay({ valueMap }: ValueMapDisplayProps) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <p className="text-[9px] tracking-[0.25em] uppercase opacity-30 mb-0.5">Honor Tile Values</p>
-      {HONOR_TILES.map(({ key, label, unicode }) => {
-        const value = valueMap[key] ?? 5;
-        const color = getValueColor(value);
-        const isDanger = value <= 2 || value >= 8;
+    <div className="flex flex-col gap-2">
+      <p className="text-[9px] tracking-[0.25em] uppercase opacity-30 mb-1">Honor Tile Values</p>
 
-        return (
-          <div key={key} className="flex items-center gap-2">
-            {/* Tile symbol */}
-            <span
-              className="text-base w-6 text-center leading-none shrink-0"
-              style={{ fontFamily: 'serif' }}
-              title={label}
-            >
-              {unicode}
-            </span>
+      <SectionLabel label="Dragons" />
+      <div className="grid grid-cols-3 gap-2">
+        {DRAGONS.map((def) => (
+          <TileCard key={def.key} def={def} value={valueMap[def.key] ?? 5} />
+        ))}
+      </div>
 
-            {/* Bar */}
-            <div
-              className="flex-1 h-1.5 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.08)' }}
-            >
-              <motion.div
-                className="h-full rounded-full"
-                animate={{ width: getBarWidth(value) }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                style={{ backgroundColor: color }}
-              />
-            </div>
-
-            {/* Value number */}
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={value}
-                initial={{ y: -6, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 6, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs font-bold w-4 text-right tabular-nums shrink-0"
-                style={{ color }}
-              >
-                {value}
-              </motion.span>
-            </AnimatePresence>
-
-            {/* Warning dot */}
-            {isDanger && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: color }}
-              />
-            )}
-            {!isDanger && <div className="w-1.5 shrink-0" />}
-          </div>
-        );
-      })}
+      <SectionLabel label="Winds" />
+      <div className="grid grid-cols-2 gap-2">
+        {WINDS.map((def) => (
+          <TileCard key={def.key} def={def} value={valueMap[def.key] ?? 5} />
+        ))}
+      </div>
     </div>
   );
 }

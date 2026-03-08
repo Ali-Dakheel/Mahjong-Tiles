@@ -6,7 +6,7 @@ import type { Tile as TileType } from '@/types/game';
 interface TileProps {
   tile: TileType;
   revealed?: boolean;
-  size?: 'normal' | 'small';
+  size?: 'normal' | 'medium' | 'small';
   glowVariant?: 'win' | 'loss' | null;
   className?: string;
 }
@@ -15,10 +15,16 @@ const BACK_CHAR = String.fromCodePoint(0x1f02b);
 
 const sizeConfig = {
   normal: {
-    outer: 'w-16 h-24',
-    fontSize: 'text-4xl',
+    outer: 'w-32 h-44',
+    fontSize: 'text-6xl',
+    radius: 'rounded-2xl',
+    shadow: 'shadow-2xl',
+  },
+  medium: {
+    outer: 'w-14 h-20',
+    fontSize: 'text-3xl',
     radius: 'rounded-xl',
-    shadow: 'shadow-xl',
+    shadow: 'shadow-lg',
   },
   small: {
     outer: 'w-9 h-13',
@@ -26,6 +32,23 @@ const sizeConfig = {
     radius: 'rounded-lg',
     shadow: 'shadow-md',
   },
+};
+
+// Maps tile type+suit to { chinese, color, label }
+const HONOR_META: Record<string, { chinese: string; color: string; label: string }> = {
+  'dragon-red':   { chinese: '中', color: '#ef4444', label: 'Dragon' },
+  'dragon-green': { chinese: '發', color: '#22c55e', label: 'Dragon' },
+  'dragon-white': { chinese: '白', color: '#94a3b8', label: 'Dragon' },
+  'wind-east':    { chinese: '東', color: '#f59e0b', label: 'Wind' },
+  'wind-south':   { chinese: '南', color: '#f59e0b', label: 'Wind' },
+  'wind-west':    { chinese: '西', color: '#f59e0b', label: 'Wind' },
+  'wind-north':   { chinese: '北', color: '#f59e0b', label: 'Wind' },
+};
+
+const SUIT_LABEL: Record<string, string> = {
+  character: 'Char',
+  bamboo: 'Bam',
+  circle: 'Circ',
 };
 
 export function Tile({ tile, revealed = true, size = 'normal', glowVariant = null, className = '' }: TileProps) {
@@ -61,6 +84,28 @@ export function Tile({ tile, revealed = true, size = 'normal', glowVariant = nul
           >
             {tile.unicode}
           </span>
+          {(size === 'normal' || size === 'medium') && (() => {
+            const honorKey = `${tile.type}-${tile.suit}`;
+            const honor = HONOR_META[honorKey];
+            if (honor) {
+              return (
+                <div className="flex flex-col items-center leading-none mt-0.5" style={{ gap: '1px' }}>
+                  <span className="text-lg font-bold leading-none" style={{ color: honor.color, fontFamily: 'serif' }}>
+                    {honor.chinese}
+                  </span>
+                  <span className="text-[8px] tracking-wider uppercase font-semibold opacity-50" style={{ color: '#1a1008' }}>
+                    {honor.label}
+                  </span>
+                </div>
+              );
+            }
+            const suitLabel = SUIT_LABEL[tile.suit] ?? tile.suit;
+            return (
+              <span className="text-[8px] tracking-wider uppercase font-semibold opacity-40 mt-0.5" style={{ color: '#1a1008' }}>
+                {suitLabel}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Back */}

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, LayoutList, Zap } from 'lucide-react';
+import { ArrowLeft, LayoutList, Zap, TrendingUp, Target, Flame } from 'lucide-react';
 import { useGameState } from '@/lib/hooks/useGameState';
 import { usePhaseAutoAdvance } from '@/lib/hooks/usePhaseAutoAdvance';
 import { PHASE_LABELS, PHASE_INDICATOR_COLOR } from '@/lib/constants/phases';
@@ -16,6 +16,7 @@ import {
   ValueMapDisplay,
   GameOverScreen,
 } from '@/components/game';
+import { DevPanel } from '@/components/dev/DevPanel';
 
 export default function GamePage() {
   const router = useRouter();
@@ -48,6 +49,12 @@ export default function GamePage() {
   usePhaseAutoAdvance(phase, advanceToNextBet);
 
   const latestRound = history[0] ?? null;
+
+  // Live game stats
+  const totalRounds = history.length;
+  const wins = history.filter((r) => r.outcome === 'win').length;
+  const winRate = totalRounds > 0 ? Math.round((wins / totalRounds) * 100) : 0;
+  const bestStreak = history.reduce((best, r) => Math.max(best, r.streakAtTime), 0);
   const glowVariant =
     phase === 'revealing' && latestRound ? latestRound.outcome : null;
 
@@ -112,10 +119,10 @@ export default function GamePage() {
       </header>
 
       {/* Main layout */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-0 relative z-10 max-w-6xl mx-auto w-full px-4 py-6">
+      <div className="flex-1 flex flex-col lg:flex-row gap-0 relative z-10 max-w-screen-2xl mx-auto w-full px-4 py-4">
 
         {/* Left sidebar — history (desktop) */}
-        <aside className="hidden lg:flex flex-col gap-3 w-72 shrink-0 pr-6">
+        <aside className="hidden lg:flex flex-col gap-3 w-80 shrink-0 pr-6">
           <div className="glass rounded-xl p-4 flex-1 min-h-0 flex flex-col gap-3">
             <div className="flex items-center gap-2 opacity-40">
               <LayoutList size={13} />
@@ -148,7 +155,7 @@ export default function GamePage() {
                 className="flex flex-col items-center gap-2"
               >
                 <span className="text-[9px] tracking-widest uppercase opacity-20">Previous Hand</span>
-                <div className="flex gap-2 opacity-30">
+                <div className="flex gap-2 opacity-50">
                   {latestRound.previousHand.map((tile) => (
                     <Tile key={tile.id} tile={tile} revealed size="small" />
                   ))}
@@ -221,10 +228,50 @@ export default function GamePage() {
             phase={phase}
             onBet={placeBet}
           />
+
+          {/* Live game stats */}
+          {totalRounds > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-3 gap-3 w-full max-w-sm"
+            >
+              <div
+                className="flex flex-col items-center gap-1 rounded-xl py-3 px-2"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <Target size={13} style={{ color: '#c8a96e', opacity: 0.6 }} />
+                <span className="text-lg font-black tabular-nums" style={{ color: '#c8a96e' }}>
+                  {winRate}%
+                </span>
+                <span className="text-[8px] tracking-widest uppercase opacity-30">Win Rate</span>
+              </div>
+              <div
+                className="flex flex-col items-center gap-1 rounded-xl py-3 px-2"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <TrendingUp size={13} style={{ color: '#c8a96e', opacity: 0.6 }} />
+                <span className="text-lg font-black tabular-nums" style={{ color: '#c8a96e' }}>
+                  {wins}/{totalRounds}
+                </span>
+                <span className="text-[8px] tracking-widest uppercase opacity-30">Wins</span>
+              </div>
+              <div
+                className="flex flex-col items-center gap-1 rounded-xl py-3 px-2"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <Flame size={13} style={{ color: '#f59e0b', opacity: 0.7 }} />
+                <span className="text-lg font-black tabular-nums" style={{ color: '#f59e0b' }}>
+                  {bestStreak}
+                </span>
+                <span className="text-[8px] tracking-widest uppercase opacity-30">Best Streak</span>
+              </div>
+            </motion.div>
+          )}
         </main>
 
         {/* Right sidebar — value map (desktop) */}
-        <aside className="hidden lg:flex flex-col gap-3 w-56 shrink-0 pl-6">
+        <aside className="hidden lg:flex flex-col gap-3 w-80 shrink-0 pl-6">
           <div className="glass rounded-xl p-4">
             <ValueMapDisplay valueMap={tileValueMap} />
           </div>
@@ -233,7 +280,7 @@ export default function GamePage() {
               <LayoutList size={13} />
               <span className="text-[9px] tracking-[0.25em] uppercase">Last 3</span>
             </div>
-            <HistoryPanel history={history.slice(0, 3)} />
+            <HistoryPanel history={history.slice(0, 3)} compact />
           </div>
         </aside>
       </div>
@@ -248,7 +295,7 @@ export default function GamePage() {
             <LayoutList size={12} />
             <span className="text-[9px] tracking-widest uppercase">History</span>
           </div>
-          <HistoryPanel history={history.slice(0, 4)} />
+          <HistoryPanel history={history.slice(0, 4)} compact />
         </div>
       </div>
 
@@ -268,6 +315,9 @@ export default function GamePage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Dev panel — development only */}
+      {process.env.NODE_ENV !== 'production' && <DevPanel />}
     </div>
   );
 }

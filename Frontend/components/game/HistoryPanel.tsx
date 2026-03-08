@@ -6,25 +6,82 @@ import { Tile } from './Tile';
 
 interface HistoryPanelProps {
   history: BettingRound[];
+  compact?: boolean;
 }
 
-function OutcomeChip({ outcome, points }: { outcome: 'win' | 'loss'; points: number }) {
-  const isWin = outcome === 'win';
+function HistoryRow({ round, compact }: { round: BettingRound; compact: boolean }) {
+  const isWin = round.outcome === 'win';
+  const winColor = '#4ade80';
+  const lossColor = '#f87171';
+  const outcomeColor = isWin ? winColor : lossColor;
+
   return (
-    <span
-      className="text-[10px] font-semibold px-2 py-0.5 rounded-full tracking-wider"
+    <motion.div
+      key={`round-${round.roundNumber}`}
+      initial={{ x: -16, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 16, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="flex flex-col gap-2 rounded-xl px-3 py-3"
       style={{
-        background: isWin ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-        color: isWin ? '#4ade80' : '#f87171',
-        border: `1px solid ${isWin ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+        background: isWin ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
+        border: `1px solid ${isWin ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)'}`,
       }}
     >
-      {isWin ? `+${points}` : 'LOSS'}
-    </span>
+      {/* Header row: round # + outcome */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold tracking-widest opacity-30">
+          ROUND {round.roundNumber}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {isWin && round.streakAtTime >= 2 && (
+            <span className="text-[9px]" style={{ color: '#f59e0b' }}>🔥×{round.streakAtTime}</span>
+          )}
+          <span
+            className="text-[11px] font-black px-2.5 py-0.5 rounded-lg tracking-wider"
+            style={{
+              background: isWin ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)',
+              color: outcomeColor,
+              border: `1px solid ${isWin ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+            }}
+          >
+            {isWin ? `+${round.pointsEarned}` : 'LOSS'}
+          </span>
+        </div>
+      </div>
+
+      {/* Hands: prev → bet → new */}
+      <div className="flex items-center gap-2">
+        {/* Previous hand */}
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <div className="flex gap-0.5">
+            {round.previousHand.slice(0, 4).map((tile) => (
+              <Tile key={tile.id} tile={tile} revealed size="small" />
+            ))}
+          </div>
+          <span className="text-[9px] tabular-nums opacity-30">= {round.previousHandValue}</span>
+        </div>
+
+        {/* Bet arrow */}
+        <span className="text-lg font-black shrink-0" style={{ color: outcomeColor }}>
+          {round.bet === 'higher' ? '↑' : '↓'}
+        </span>
+
+        {/* New hand */}
+        <div className="flex flex-col items-center gap-1 flex-1">
+          <div className="flex gap-0.5">
+            {round.currentHand.slice(0, 4).map((tile) => (
+              <Tile key={tile.id} tile={tile} revealed size="small" />
+            ))}
+          </div>
+          <span className="text-[9px] tabular-nums opacity-30">= {round.currentHandValue}</span>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
-export function HistoryPanel({ history }: HistoryPanelProps) {
+export function HistoryPanel({ history, compact = false }: HistoryPanelProps) {
   if (history.length === 0) {
     return (
       <div className="flex items-center justify-center h-24 opacity-20">
@@ -34,52 +91,10 @@ export function HistoryPanel({ history }: HistoryPanelProps) {
   }
 
   return (
-    <div className="overflow-y-auto max-h-64 thin-scroll flex flex-col gap-1.5 pr-0.5">
+    <div className="overflow-y-auto flex-1 min-h-0 thin-scroll flex flex-col gap-2 pr-0.5">
       <AnimatePresence initial={false}>
         {history.map((round) => (
-          <motion.div
-            key={`round-${round.roundNumber}`}
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-            style={{
-              background: round.outcome === 'win'
-                ? 'rgba(34,197,94,0.05)'
-                : 'rgba(239,68,68,0.05)',
-              border: `1px solid ${round.outcome === 'win' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)'}`,
-            }}
-          >
-            {/* Round number */}
-            <span
-              className="text-[9px] w-5 text-center font-bold opacity-30 shrink-0"
-            >
-              {round.roundNumber}
-            </span>
-
-            {/* Mini tiles */}
-            <div className="flex gap-0.5 shrink-0">
-              {round.currentHand.slice(0, 4).map((tile) => (
-                <Tile key={tile.id} tile={tile} revealed size="small" />
-              ))}
-            </div>
-
-            {/* Value */}
-            <span className="text-xs opacity-50 tabular-nums shrink-0">
-              = {round.currentHandValue}
-            </span>
-
-            {/* Bet direction */}
-            <span
-              className="text-[10px] tracking-wider uppercase opacity-40 shrink-0 ml-auto"
-            >
-              {round.bet === 'higher' ? '↑' : '↓'}
-            </span>
-
-            {/* Outcome */}
-            <OutcomeChip outcome={round.outcome} points={round.pointsEarned} />
-          </motion.div>
+          <HistoryRow key={`round-${round.roundNumber}`} round={round} compact={compact} />
         ))}
       </AnimatePresence>
     </div>

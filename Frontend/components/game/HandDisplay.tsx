@@ -41,7 +41,7 @@ export function HandDisplay({
 }: HandDisplayProps) {
   return (
     <motion.div
-      className="flex items-end justify-center gap-3"
+      className="flex items-end justify-center gap-4"
       variants={container}
       initial="hidden"
       animate="show"

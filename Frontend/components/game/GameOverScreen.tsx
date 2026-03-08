@@ -25,6 +25,7 @@ export function GameOverScreen({
 }: GameOverScreenProps) {
   const [name, setName] = useState(playerName);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const queryClient = useQueryClient();
   const reason = GAME_OVER_CONFIG[gameOverReason];
 
@@ -38,7 +39,11 @@ export function GameOverScreen({
       }),
     onSuccess: () => {
       setSaved(true);
+      setSaveError(false);
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+    },
+    onError: () => {
+      setSaveError(true);
     },
   });
 
@@ -103,7 +108,7 @@ export function GameOverScreen({
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); setSaveError(false); }}
                   placeholder="Your name"
                   maxLength={50}
                   className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
@@ -131,6 +136,11 @@ export function GameOverScreen({
                   {isPending ? '...' : 'Save'}
                 </motion.button>
               </div>
+              {saveError && (
+                <p className="text-xs text-center" style={{ color: '#f87171' }}>
+                  Could not save — make sure the backend is running and try again.
+                </p>
+              )}
             </motion.div>
           ) : (
             <motion.div

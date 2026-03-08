@@ -1,7 +1,35 @@
+/**
+ * useGameState.ts — Single Subscription Hook for the Game Page
+ *
+ * PROBLEM this solves:
+ *   The game page needs ~12 pieces of state from useGameStore.
+ *   Without this hook, you'd write 12 separate lines:
+ *     const phase = useGameStore(s => s.phase)
+ *     const score = useGameStore(s => s.score)
+ *     ... 10 more
+ *   Each line creates a separate React subscription = more re-render triggers.
+ *
+ * SOLUTION:
+ *   Subscribe to all values at once using `useShallow`.
+ *   React only re-renders the component when at least one value actually changed.
+ *
+ * useShallow explained:
+ *   Normally, returning an object from a Zustand selector creates a NEW object
+ *   reference on every store write, causing constant re-renders even if nothing
+ *   you care about changed.
+ *   `useShallow` does a shallow equality check: it compares each key's value
+ *   individually and skips re-renders if nothing in the returned slice changed.
+ *
+ * TO ADD NEW STATE: add it to GameState interface + the selector object below.
+ */
+
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '@/lib/stores/useGameStore';
 import type { BetDirection } from '@/types/game';
 
+// TypeScript type for everything this hook returns.
+// Uses `ReturnType<typeof useGameStore.getState>['field']` so if the store
+// type ever changes, this interface automatically stays in sync.
 export interface GameState {
   phase: ReturnType<typeof useGameStore.getState>['phase'];
   currentHand: ReturnType<typeof useGameStore.getState>['currentHand'];
@@ -16,7 +44,7 @@ export interface GameState {
   reshuffleCount: ReturnType<typeof useGameStore.getState>['reshuffleCount'];
   gameOverReason: ReturnType<typeof useGameStore.getState>['gameOverReason'];
   playerName: ReturnType<typeof useGameStore.getState>['playerName'];
-  // Actions
+  // Actions — the game page can call these to trigger state changes
   placeBet: (direction: BetDirection) => void;
   advanceToNextBet: () => void;
   startGame: () => void;
@@ -24,8 +52,10 @@ export interface GameState {
 }
 
 /**
- * Single subscription point for all game state used by the game page.
- * Zustand re-renders only when the returned slice changes.
+ * useGameState
+ *
+ * Call once at the top of the game page to get all state + actions.
+ * Destructure what you need: const { phase, score, placeBet } = useGameState()
  */
 export function useGameState(): GameState {
   return useGameStore(useShallow((s) => ({

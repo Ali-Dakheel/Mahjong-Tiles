@@ -3,6 +3,8 @@ ARG NODE_VERSION=20-slim
 # ── Stage 1: Install dependencies ──────────────────────────────────────────────
 FROM node:${NODE_VERSION} AS dependencies
 WORKDIR /app
+# Force NODE_ENV=development so devDependencies (tailwind, typescript, etc.) are installed
+ENV NODE_ENV=development
 COPY package.json package-lock.json* ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --no-audit --no-fund

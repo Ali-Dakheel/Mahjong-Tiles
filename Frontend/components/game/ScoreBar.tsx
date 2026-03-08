@@ -1,13 +1,14 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Layers, RotateCcw } from 'lucide-react';
+import { Flame, Layers, RotateCcw, Trash2 } from 'lucide-react';
 
 interface ScoreBarProps {
   score: number;
   streak: number;
   round: number;
   drawPileCount: number;
+  discardPileCount: number;
   reshuffleCount: number;
 }
 
@@ -46,7 +47,7 @@ function StatPill({
   );
 }
 
-export function ScoreBar({ score, streak, round, drawPileCount, reshuffleCount }: ScoreBarProps) {
+export function ScoreBar({ score, streak, round, drawPileCount, discardPileCount, reshuffleCount }: ScoreBarProps) {
   return (
     <div className="flex items-center justify-between gap-2 flex-wrap">
       {/* Score */}
@@ -87,13 +88,20 @@ export function ScoreBar({ score, streak, round, drawPileCount, reshuffleCount }
         {/* Draw pile */}
         <StatPill
           icon={<Layers size={13} />}
-          label="Deck"
+          label="Draw"
           value={
             <span className={drawPileCount < 8 ? 'text-amber-400' : ''}>
               {drawPileCount}
             </span>
           }
           highlight={drawPileCount < 8}
+        />
+
+        {/* Discard pile */}
+        <StatPill
+          icon={<Trash2 size={13} />}
+          label="Discard"
+          value={discardPileCount}
         />
 
         {/* Reshuffle counter */}

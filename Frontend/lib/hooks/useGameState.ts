@@ -12,6 +12,7 @@ export interface GameState {
   streak: ReturnType<typeof useGameStore.getState>['streak'];
   currentRound: ReturnType<typeof useGameStore.getState>['currentRound'];
   drawPile: ReturnType<typeof useGameStore.getState>['drawPile'];
+  discardPile: ReturnType<typeof useGameStore.getState>['discardPile'];
   reshuffleCount: ReturnType<typeof useGameStore.getState>['reshuffleCount'];
   gameOverReason: ReturnType<typeof useGameStore.getState>['gameOverReason'];
   playerName: ReturnType<typeof useGameStore.getState>['playerName'];
@@ -37,6 +38,7 @@ export function useGameState(): GameState {
     streak: s.streak,
     currentRound: s.currentRound,
     drawPile: s.drawPile,
+    discardPile: s.discardPile,
     reshuffleCount: s.reshuffleCount,
     gameOverReason: s.gameOverReason,
     playerName: s.playerName,

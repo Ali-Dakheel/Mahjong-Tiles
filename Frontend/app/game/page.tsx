@@ -31,6 +31,7 @@ export default function GamePage() {
     streak,
     currentRound,
     drawPile,
+    discardPile,
     reshuffleCount,
     gameOverReason,
     playerName,
@@ -142,6 +143,7 @@ export default function GamePage() {
               streak={streak}
               round={currentRound}
               drawPileCount={drawPile.length}
+              discardPileCount={discardPile.length}
               reshuffleCount={reshuffleCount}
             />
           </div>

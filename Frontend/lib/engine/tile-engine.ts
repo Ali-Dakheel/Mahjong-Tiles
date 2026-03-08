@@ -131,7 +131,7 @@ export function applyValueScaling(
   for (const tile of hand) {
     if (tile.type === 'dragon' || tile.type === 'wind') {
       const key = `${tile.type}_${tile.suit}` as keyof TileValueMap;
-      const newVal = Math.min(9, Math.max(1, (updated[key] ?? 5) + delta));
+      const newVal = Math.min(10, Math.max(0, (updated[key] ?? 5) + delta));
       updated[key] = newVal;
     }
   }
